@@ -77,7 +77,7 @@ train_mask = mask[:train_split]
 test_mask = mask[train_split:]
 
 top_models = []
-num_best_models = 5
+num_best_models = config['average_num']
 
 losses = []
 accuracies = []
