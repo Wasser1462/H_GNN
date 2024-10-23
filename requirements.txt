@@ -1,0 +1,12 @@
+torch==1.13.1
+torch_geometric==2.1.0
+torchvision==0.14.1
+pandas
+numpy
+networkx
+scikit-learn
+matplotlib
+seaborn
+tqdm
+pyyaml
+node2vec

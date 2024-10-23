@@ -1,0 +1,23 @@
+
+file_path: 'train.xlsx'
+
+#node2vec
+walk_length: 30
+num_walks: 20
+workers: 4
+window: 15
+min_count: 5
+dimensions: 256
+
+#gnn
+input_num: 256
+hidden_dim_0: 128
+hidden_dim_1: 64
+output_dim: 2
+num_heads: 5
+
+#train config
+seed: 42
+learning_rate: 0.01
+train_split_ratio: 0.8
+num_epochs: 400
