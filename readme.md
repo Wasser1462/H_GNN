@@ -10,7 +10,7 @@ This repository implements a method for identifying key nodes in complex network
 - `model.py`: This file contains the GNN model architecture.
 - `requirements.txt`: File listing the necessary Python packages and dependencies.
 - `train.py`: Main script used to train the GNN model.
-- `train.xlsx`: Excel file containing training data or results.
+- `train.xlsx`: Excel file containing training data.
 
 ## Prerequisites
 
@@ -27,6 +27,9 @@ First, clone this repository to your local machine:
 
 ```bash
 git clone https://github.com/Wasser1462/H_GNN.git
+```
+
+```bash
 cd H_GNN
 ```
 
@@ -35,13 +38,13 @@ cd H_GNN
 Create a new conda environment with Python 3.8 (or a compatible version):
 
 ```bash
-conda create --name h_gnn_env python=3.8
+conda create --name h_gnn python=3.8
 ```
 
 Activate the newly created environment:
 
 ```bash
-conda activate h_gnn_env
+conda activate h_gnn
 ```
 
 ### 3. Install dependencies

@@ -13,7 +13,6 @@ def compute_entropy(probabilities):
     entropy = torch.sum(-probabilities * torch.log2(probabilities + 1e-10))
     return entropy
 
-
 def calculate_entropy(adj_matrix):
     entropies = []
     for i in range(adj_matrix.shape[0]):
@@ -23,7 +22,6 @@ def calculate_entropy(adj_matrix):
         entropy = compute_entropy(probabilities)
         entropies.append(entropy)
     return entropies
-
 
 def calculate_comprehensive_degree(G, degree_values):
     comprehensive_degrees = []
@@ -36,7 +34,6 @@ def calculate_comprehensive_degree(G, degree_values):
         Y = degree_values[node] + a * d
         comprehensive_degrees.append(Y)
     return comprehensive_degrees
-
 
 def calculate_edge_weight(G, degree_values):
     edge_weights = []
@@ -64,12 +61,12 @@ def calculate_c_value(G, node):
     for neighbor in ego.nodes:
         if neighbor != node:
             neighbor_degree = G.degree(neighbor)
-
             u = neighbor_degree / N
             d = N - 1
             C = node_degree + u * d
             c_sum += C
     return c_sum
+
 def calculate_cew(adj_matrix):
 
     G = nx.Graph(adj_matrix)
