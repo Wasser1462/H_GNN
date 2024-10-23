@@ -26,8 +26,8 @@ Follow these instructions to set up the project on your local machine for develo
 First, clone this repository to your local machine:
 
 ```bash
-git clone https://github.com/your-username/h_gnn.git
-cd h_gnn
+git clone https://github.com/Wasser1462/H_GNN.git
+cd H_GNN
 ```
 
 ### 2. Create a Conda environment
