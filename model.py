@@ -15,7 +15,7 @@ class GNNModel(nn.Module):
         self.W0 = nn.Parameter(torch.Tensor(num_heads, input_dim, hidden_dim_0))
         self.b0 = nn.Parameter(torch.Tensor(num_heads, hidden_dim_0))
         
-        self.W1 = nn.Parameter(torch.Tensor(num_heads, hidden_dim_0, hidden_dim_1))
+        self.W1 = nn.Parameter(torch.Tensor(num_heads, hidden_dim_0 * num_heads, hidden_dim_1))
         self.b1 = nn.Parameter(torch.Tensor(num_heads, hidden_dim_1))
         
         self.W2 = nn.Parameter(torch.Tensor(hidden_dim_1 * num_heads, output_dim))

@@ -1,3 +1,7 @@
+# Author: zyw
+# Date: 2024-10-23
+# Description: This script trains a GNN model using Connection Entropy Weight (CEW) values as features for the training process.
+
 import torch
 import torch.nn.functional as F
 import pandas as pd
@@ -30,19 +34,20 @@ except FileNotFoundError:
     logging.error(f"File not found: {file_path}")
     exit(1)
 
-cew_values = calculate_cew(adj_matrix)
-cew_values = torch.FloatTensor(cew_values).view(-1, 1).to(device)
 
 G = nx.Graph(adj_matrix)
 isolated_nodes = list(nx.isolates(G))
 G.remove_nodes_from(isolated_nodes)
 G.remove_edges_from(nx.selfloop_edges(G))
 
+cew_values = calculate_cew(adj_matrix)
+cew_values = torch.FloatTensor(cew_values).view(-1, 1).to(device)
+
 node2vec = Node2Vec(G, dimensions=config['dimensions'], walk_length=config['walk_length'],
                     num_walks=config['num_walks'], workers=config['workers'])
 model = node2vec.fit(window=config['window'], min_count=config['min_count'])
-node_embeddings = {node: model.wv[node] for node in G.nodes}
-embedding_matrix = [node_embeddings[node] for node in G.nodes]
+
+embedding_matrix = np.array([model.wv[node] for node in G.nodes])  
 embedding_matrix = torch.tensor(embedding_matrix, dtype=torch.float).to(device)
 
 features = torch.cat((embedding_matrix, cew_values), dim=1)
@@ -72,10 +77,15 @@ num_heads = config['num_heads']
 learning_rate = config['learning_rate']
 
 torch.manual_seed(config['seed'])
+
 mask = torch.randperm(len(G.nodes))
 train_split = int(len(G.nodes) * config['train_split_ratio'])
 train_mask = mask[:train_split].to(device)
 test_mask = mask[train_split:].to(device)
+
+model = GNNModel(input_dim, hidden_dim_0, hidden_dim_1, output_dim, num_heads).to(device)
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 top_models = []
 num_best_models = config['average_num']
@@ -84,15 +94,13 @@ losses = []
 accuracies = []
 
 for epoch in range(config['num_epochs']):
-    model = GNNModel(input_dim, hidden_dim_0, hidden_dim_1, output_dim, num_heads).to(device)
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    
     model.train()
     optimizer.zero_grad()
+    
     logits = model(data)
     train_masked_logits = logits[train_mask]
     train_masked_labels = data.y[train_mask]
+    
     loss = criterion(train_masked_logits, train_masked_labels)
     loss.backward()
     optimizer.step()
