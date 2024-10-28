@@ -1,5 +1,8 @@
+#input data
+file_path: './data/train.xlsx'
 
-file_path: 'train.xlsx'
+#save result
+output_result: 'result'
 
 #node2vec
 walk_length: 30
@@ -25,3 +28,4 @@ seed: 42
 learning_rate: 0.01
 train_split_ratio: 0.8
 num_epochs: 400
+

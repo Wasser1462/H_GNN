@@ -1,3 +1,8 @@
+# Author: zyw
+# Date: 2024-10-23
+# Description: This script trains a GNN model using Connection Entropy Weight (CEW) values as features for the training process.
+
+import os
 import torch
 import torch.nn.functional as F
 import pandas as pd
@@ -23,6 +28,8 @@ with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 file_path = config['file_path']
+output_dir = config['output_result']
+os.makedirs(output_dir, exist_ok=True)  
 
 try:
     adj_matrix = pd.read_excel(file_path, header=None, index_col=None).values
@@ -88,8 +95,8 @@ patience_counter = 0
 losses = []
 accuracies = []
 
-top_models = []
-num_best_models = config['average_num']
+model_state = None
+test_metrics = {}
 
 for epoch in range(config['num_epochs']):
     model.train()
@@ -110,11 +117,25 @@ for epoch in range(config['num_epochs']):
         if loss.item() < best_loss:
             best_loss = loss.item()
             patience_counter = 0
+            model_state = model.state_dict().copy()
         else:
             patience_counter += 1
         if patience_counter >= early_stopping_patience:
             logging.info(f"Early stopping triggered at epoch {epoch}")
             break
+else:
+    if loss.item() < best_loss:
+        best_loss = loss.item()
+        model_state = model.state_dict().copy()
+
+if model_state is not None:
+    model.load_state_dict(model_state)
+    torch.save(model_state, os.path.join(output_dir, 'model.pt'))
+else:
+
+    model_state = model.state_dict().copy()
+    torch.save(model_state, os.path.join(output_dir, 'model_last_epoch.pt'))
+    logging.warning("Early stopping has not been triggered, and the model of the last epoch is saved.")
 
 model.eval()
 with torch.no_grad():
@@ -123,46 +144,22 @@ with torch.no_grad():
     test_labels = data.y[test_mask]
     predictions = torch.argmax(test_logits, dim=1)
     accuracy = accuracy_score(test_labels.cpu(), predictions.cpu())
-    accuracies.append(accuracy)
-
-    if len(top_models) < num_best_models:
-        top_models.append((accuracy, model.state_dict()))
-    else:
-        min_accuracy = min(top_models, key=lambda x: x[0])[0]
-        if accuracy > min_accuracy:
-            top_models = sorted(top_models, key=lambda x: x[0], reverse=True)
-            top_models[-1] = (accuracy, model.state_dict())
-
-avg_state_dict = None
-for i, (_, state_dict) in enumerate(top_models):
-    if avg_state_dict is None:
-        avg_state_dict = {key: value.clone() for key, value in state_dict.items()}
-    else:
-        for key in avg_state_dict:
-            avg_state_dict[key] += state_dict[key]
-for key in avg_state_dict:
-    avg_state_dict[key] = torch.true_divide(avg_state_dict[key], len(top_models))
-
-avg_model = GNNModel(input_dim, hidden_dim_0, hidden_dim_1, output_dim, num_heads).to(device)
-avg_model.load_state_dict(avg_state_dict)
-torch.save(avg_model.state_dict(), 'model.pt')
-
-avg_model.eval()
-with torch.no_grad():
-    logits = avg_model(data)
-    test_logits = logits[test_mask]
-    test_labels = data.y[test_mask]
-    predictions = torch.argmax(test_logits, dim=1)
-    accuracy = accuracy_score(test_labels.cpu(), predictions.cpu())
     precision = precision_score(test_labels.cpu(), predictions.cpu(), average='macro')
     recall = recall_score(test_labels.cpu(), predictions.cpu(), average='macro')
     f1 = f1_score(test_labels.cpu(), predictions.cpu(), average='macro')
+    
+    test_metrics = {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1
+    }
 
-logging.info("Final Averaged Model Evaluation:")
-logging.info(f"Accuracy: {accuracy}")
-logging.info(f"Precision: {precision}")
-logging.info(f"Recall: {recall}")
-logging.info(f"F1 Score: {f1}")
+logging.info("Model Evaluation on Test Set:")
+logging.info(f"Accuracy: {test_metrics['accuracy']}")
+logging.info(f"Precision: {test_metrics['precision']}")
+logging.info(f"Recall: {test_metrics['recall']}")
+logging.info(f"F1 Score: {test_metrics['f1']}")
 
 plt.figure()
 plt.plot(range(1, len(losses) + 1), losses, label='Training Loss')
@@ -170,7 +167,8 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Training Loss Curve')
 plt.legend()
-plt.show()
+plt.savefig(os.path.join(output_dir, 'training_loss_curve.png'))
+plt.close()
 
 conf_matrix = confusion_matrix(test_labels.cpu(), predictions.cpu())
 plt.figure(figsize=(8, 6))
@@ -178,7 +176,9 @@ sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
 plt.xlabel('Predicted Label')
 plt.ylabel('True Label')
 plt.title('Confusion Matrix')
-plt.show()
+plt.savefig(os.path.join(output_dir, 'confusion_matrix.png'))
+plt.close()
+
 
 fpr, tpr, _ = roc_curve(test_labels.cpu(), test_logits[:, 1].detach().cpu().numpy())
 roc_auc = auc(fpr, tpr)
@@ -189,4 +189,5 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('Receiver Operating Characteristic (ROC) Curve')
 plt.legend(loc='lower right')
-plt.show()
+plt.savefig(os.path.join(output_dir, 'roc_curve.png'))
+plt.close()
