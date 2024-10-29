@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import pandas as pd
 
-
 def compute_entropy(probabilities):
     probabilities = torch.FloatTensor(probabilities)
     entropy = torch.sum(-probabilities * torch.log2(probabilities + 1e-10))

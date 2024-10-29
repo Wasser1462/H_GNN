@@ -47,11 +47,27 @@ cew_values = torch.FloatTensor(cew_values).view(-1, 1).to(device)
 
 node2vec = Node2Vec(G, dimensions=config['dimensions'], walk_length=config['walk_length'],
                     num_walks=config['num_walks'], workers=config['workers'])
-model = node2vec.fit(window=config['window'], min_count=config['min_count'])
-embedding_matrix = np.array([model.wv[node] for node in G.nodes])  
-embedding_matrix = torch.tensor(embedding_matrix, dtype=torch.float).to(device)
+model = node2vec.fit(window=config['window'], min_count=config['min_count'], epochs=config['node2vec_epoch'])
+node_embeddings = {node: model.wv[node] for node in G.nodes}
 
-features = torch.cat((embedding_matrix, cew_values), dim=1)
+embedding_matrix = [node_embeddings[node] for node in G.nodes]
+embedding_matrix = torch.tensor(embedding_matrix, dtype=torch.float).to(device)
+logging.info(f'Embedding matrix: {embedding_matrix}')
+logging.info(f'Embedding matrix shape: {embedding_matrix.shape}')
+
+# node_to_index = {node: idx for idx, node in enumerate(G.nodes)}
+# aggregated_neighbors = torch.zeros_like(embedding_matrix)
+# for node in G.nodes:
+#     neighbors = list(G.neighbors(node))
+#     if neighbors:
+#         neighbor_embeddings = torch.stack([embedding_matrix[node_to_index[n]] for n in neighbors])
+#         aggregated_neighbors[node_to_index[node]] = neighbor_embeddings.mean(dim=0)
+#     else:
+#         aggregated_neighbors[node_to_index[node]] = torch.zeros(embedding_matrix.size(1)).to(device)
+features = torch.cat([embedding_matrix, cew_values], dim=1)
+logging.info(f'Features: {features}')
+logging.info(f'Features shape: {features.shape}')
+
 binary_matrix = np.zeros((len(G.nodes),), dtype=int)
 C_values = {}
 with tqdm(total=len(G.nodes), desc="Calculating C values") as pbar:
@@ -60,7 +76,7 @@ with tqdm(total=len(G.nodes), desc="Calculating C values") as pbar:
         pbar.update(1)
 
 sorted_nodes = sorted(C_values.keys(), key=lambda node: C_values[node], reverse=True)
-top_percent = int(len(sorted_nodes) * 0.1)
+top_percent = int(len(sorted_nodes) * config['key_node'])
 node_to_index = {node: idx for idx, node in enumerate(G.nodes)}
 for node in sorted_nodes[:top_percent]:
     index = node_to_index[node]
@@ -99,14 +115,14 @@ model_state = None
 test_metrics = {}
 
 for epoch in range(config['num_epochs']):
-    model.train()
+    #model.train()
     optimizer.zero_grad()
     logits = model(data)
     train_masked_logits = logits[train_mask]
     train_masked_labels = data.y[train_mask]
     
     loss = criterion(train_masked_logits, train_masked_labels)
-    loss.backward()
+    loss.backward(retain_graph=True)
     optimizer.step()
     losses.append(loss.item())
     
@@ -178,7 +194,6 @@ plt.ylabel('True Label')
 plt.title('Confusion Matrix')
 plt.savefig(os.path.join(output_dir, 'confusion_matrix.png'))
 plt.close()
-
 
 fpr, tpr, _ = roc_curve(test_labels.cpu(), test_logits[:, 1].detach().cpu().numpy())
 roc_auc = auc(fpr, tpr)
