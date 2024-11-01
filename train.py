@@ -64,6 +64,7 @@ logging.info(f'Embedding matrix shape: {embedding_matrix.shape}')
 #         aggregated_neighbors[node_to_index[node]] = neighbor_embeddings.mean(dim=0)
 #     else:
 #         aggregated_neighbors[node_to_index[node]] = torch.zeros(embedding_matrix.size(1)).to(device)
+
 features = torch.cat([embedding_matrix, cew_values], dim=1)
 logging.info(f'Features: {features}')
 logging.info(f'Features shape: {features.shape}')
@@ -115,7 +116,7 @@ model_state = None
 test_metrics = {}
 
 for epoch in range(config['num_epochs']):
-    #model.train()
+    model.train()
     optimizer.zero_grad()
     logits = model(data)
     train_masked_logits = logits[train_mask]
