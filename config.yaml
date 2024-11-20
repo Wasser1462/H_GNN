@@ -31,3 +31,6 @@ learning_rate: 0.02
 train_split_ratio: 0.8
 num_epochs: 400
 
+temperature: 0.5
+contrastive_weight: 1.0
+drop_edge_prob: 0.2
