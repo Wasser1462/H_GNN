@@ -127,10 +127,8 @@ def contrastive_loss(z1, z2, temperature):
 for epoch in range(config['num_epochs']):
     model.train()
     optimizer.zero_grad()
-    # 数据增强，生成两个视图
     edge_index_1 = edge_index
     edge_index_2 = edge_index
-    #随机丢弃一定比例的边
     def dropout_edge(edge_index, drop_prob):
         mask = torch.rand(edge_index.size(1)) >= drop_prob
         return edge_index[:, mask]
@@ -138,27 +136,22 @@ for epoch in range(config['num_epochs']):
     edge_index_1 = dropout_edge(edge_index, drop_prob)
     edge_index_2 = dropout_edge(edge_index, drop_prob)
 
-    # 构建两个数据视图
     data1 = Data(x=features, edge_index=edge_index_1)
-    data1.cew = cew_norm  # 添加这行，确保 cew 被包含在 data1 中
+    data1.cew = cew_norm  
 
     data2 = Data(x=features, edge_index=edge_index_2)
-    data2.cew = cew_norm  # 同样地，添加 cew 到 data2 中
+    data2.cew = cew_norm  
 
-    # 前向传播
     z1 = model(data1)
     z2 = model(data2)
     logits = model(data)
 
-    # 监督损失
     train_masked_logits = logits[train_mask]
     train_masked_labels = data.y[train_mask]
     loss_supervised = criterion(train_masked_logits, train_masked_labels)
 
-    # 对比学习损失
     loss_contrastive = contrastive_loss(z1[train_mask], z2[train_mask], temperature)
 
-    # 总损失
     loss = loss_supervised + contrastive_weight * loss_contrastive
     loss.backward()
     optimizer.step()
