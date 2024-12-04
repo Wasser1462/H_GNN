@@ -14,7 +14,6 @@ min_count: 5
 dimensions: 256
 
 #gnn
-key_node: 0.2
 input_num: 256
 hidden_dim_0: 128
 hidden_dim_1: 64
@@ -26,11 +25,19 @@ early_stopping: False
 early_stopping_patience: 30
 
 #average_num: 5
-seed: 42
-learning_rate: 0.02
+seed: 66
+learning_rate: 0.01
 train_split_ratio: 0.8
 num_epochs: 400
 
+#contrastive learning
 temperature: 0.5
 contrastive_weight: 1.0
 drop_edge_prob: 0.2
+
+#SIR
+key_node: 0.2
+beta: 0.2
+gamma: 0.1
+num_simulations: 10 
+steps: 3
