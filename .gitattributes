@@ -1,1 +1,2 @@
+*.xlsx filter=lfs diff=lfs merge=lfs -text
 data/adjacency_matrix/*.xlsx filter=lfs diff=lfs merge=lfs -text
