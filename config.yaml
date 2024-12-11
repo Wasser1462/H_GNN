@@ -1,5 +1,6 @@
 #input data
-file_path: './data/train.xlsx'
+train_path: './data/train'
+test_path: './data/test'
 
 #save result
 output_result: 'result'
