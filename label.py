@@ -5,53 +5,11 @@
 import numpy as np
 import random
 from tqdm import tqdm
-import yaml
 import networkx as nx
-import pandas as pd
-import os
 import logging
-import matplotlib.pyplot as plt
 from multiprocessing import Pool, cpu_count
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-with open('config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
-
-file_path = config['file_path']
-output_dir = config['output_result']
-os.makedirs(output_dir, exist_ok=True)
-
-try:
-    adj_matrix = pd.read_excel(file_path, header=None, index_col=None).values
-except FileNotFoundError:
-    logging.error(f"File not found: {file_path}")
-    exit(1)
-except Exception as e:
-    logging.error(f"Error reading the file: {e}")
-    exit(1)
-
-G = nx.Graph(adj_matrix)
-isolated_nodes = list(nx.isolates(G))
-if isolated_nodes:
-    logging.info(f"Removing isolated nodes: {isolated_nodes}")
-    G.remove_nodes_from(isolated_nodes)
-G.remove_edges_from(nx.selfloop_edges(G))
-
-beta = config.get('beta', 0.3)                 
-gamma = config.get('gamma', 0.1)                
-steps = config.get('steps', 5)               
-top_percent = config.get('top_percent', 0.2)    
-num_simulations = config.get('num_simulations', 100)  
-
-logging.info(f"Graph has {G.number_of_nodes()} nodes and {G.number_of_edges()} edges.")
-logging.info(f"Average degree: {sum(dict(G.degree()).values()) / G.number_of_nodes():.2f}")
-logging.info(f"Number of connected components: {nx.number_connected_components(G)}")
-
-# if nx.number_connected_components(G) > 1:
-#     largest_cc = max(nx.connected_components(G), key=len)
-#     G = G.subgraph(largest_cc).copy()
-#     logging.info(f"Size of the largest connected component: {len(G.nodes())} nodes")
 
 def sir_iterate(G, p, r):
     nx.set_node_attributes(G, {n: G.nodes[n]['state'] for n in G.nodes()}, 'next_state')
@@ -65,7 +23,7 @@ def sir_iterate(G, p, r):
     for n in G.nodes():
         current_state = G.nodes[n]['state']
         next_state = G.nodes[n]['next_state']
-        
+
         if current_state == 'S':
             G.nodes[n]['state'] = next_state
         elif current_state == 'I':
@@ -75,7 +33,6 @@ def sir_iterate(G, p, r):
             else:
                 G.nodes[n]['counter'] += 1
         elif current_state == 'R':
-
             pass
     return G
 
@@ -88,7 +45,7 @@ def sir_simulate(G, p, r, initially_infected, steps):
         G.nodes[node]['counter'] = 0  
 
     infected_set = set(initially_infected)
-    
+
     step = 0
     while len([x for x, y in G.nodes(data=True) if y['state'] == 'I']) > 0 and step < steps:
         sir_iterate(G, p, r)
@@ -106,15 +63,15 @@ def sir_simulate_time_series(G, p, r, initially_infected, steps):
         G.nodes[node]['counter'] = 0  
 
     infected_counts = [len(initially_infected)]
-    
+
     while len([x for x, y in G.nodes(data=True) if y['state'] == 'I']) > 0 and len(infected_counts) <= steps:
         sir_iterate(G, p, r)
         current_infected = len([x for x, y in G.nodes(data=True) if y['state'] == 'I'])
         infected_counts.append(current_infected)
-    
+
     while len(infected_counts) < steps + 1:
         infected_counts.append(0)
-    
+
     return infected_counts
 
 def simulate_node(args):
@@ -158,16 +115,9 @@ def select_key_nodes(G, infection_ability, top_percent):
     logging.info(f"Selected top {top_n} ({top_percent*100}%) key nodes out of {len(G.nodes())}.")
     return binary_matrix
 
-def save_binary_matrix(binary_matrix, output_dir, steps):
-    output_file = os.path.join(output_dir, f"binary_matrix_{steps}_steps.txt")
-    try:
-        with open(output_file, 'w') as f:
-            f.write(str(binary_matrix))
-        logging.info(f"Binary matrix saved to {output_file}")
-    except Exception as e:
-        logging.error(f"Error saving binary matrix: {e}")
-
 def plot_infection_counts(infection_ability, steps, output_dir):
+    import matplotlib.pyplot as plt
+    import os
     node_ids = list(infection_ability.keys())
     avg_infected_counts = [infection_ability[node] for node in node_ids]
 
@@ -184,6 +134,9 @@ def plot_infection_counts(infection_ability, steps, output_dir):
     logging.info(f"Infection counts bar plot saved to {output_file}")
 
 def plot_infection_time_series(G, beta, gamma, steps, num_simulations, output_dir, sample_nodes=5):
+    import matplotlib.pyplot as plt
+    import random
+    import os
     sampled_nodes = random.sample(list(G.nodes()), min(sample_nodes, len(G.nodes())))
     plt.figure(figsize=(12, 6))
     for node in sampled_nodes:
@@ -203,9 +156,3 @@ def plot_infection_time_series(G, beta, gamma, steps, num_simulations, output_di
     plt.close()
     logging.info(f"Infection time series plot saved to {output_file}")
 
-
-# infected_nodes = sum(binary_matrix)
-# logging.info(f"Steps: {steps}, Infected nodes: {infected_nodes}, Total nodes: {len(G.nodes())}")
-# save_binary_matrix(binary_matrix, output_dir, steps)
-# plot_infection_counts(infection_ability, steps, output_dir)
-# plot_infection_time_series(G, beta, gamma, steps, num_simulations, output_dir)

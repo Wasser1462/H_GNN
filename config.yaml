@@ -1,6 +1,6 @@
 #input data
 train_path: './data/train'
-test_path: './data/test'
+test_path: './data/test/test.xlsx'
 
 #save result
 output_result: 'result'
@@ -22,6 +22,8 @@ output_dim: 2
 num_heads: 5
 
 #train config
+batch_size: 12
+shuffle: True
 early_stopping: False
 early_stopping_patience: 30
 
