@@ -1,9 +1,12 @@
 #input data
 train_path: './data/train'
 test_path: './data/test/test.xlsx'
-
 #save result
 output_result: 'result'
+
+#device
+use_cpu: False        #choice:True or False
+gpu_ids: [0]          
 
 #node2vec
 walk_length: 30
@@ -14,32 +17,46 @@ node2vec_epoch: 5
 min_count: 5
 dimensions: 256
 
-#gnn
+#hgnn
 input_num: 256
-hidden_dim_0: 128
-hidden_dim_1: 64
+hidden_dim_0: 1024
+hidden_dim_1: 256
 output_dim: 2
 num_heads: 5
 
 #train config
-batch_size: 12
+use_cache: True
+cache_path: './data/cache'
+batch_size_test: 1
+batch_size: 32
+num_workers: 4
+loss_type: 'cross_entropy'           #choice:'cross_entropy'、'contrastive' or 'both'
 shuffle: True
 early_stopping: False
 early_stopping_patience: 30
-
 #average_num: 5
-seed: 66
-learning_rate: 0.01
-train_split_ratio: 0.8
+seed: 631
+learning_rate: 0.001
 num_epochs: 400
+
+#scheduler
+mode: 'min'
+factor: 0.1
+patience: 10
+verbose: True
+# threshold: 0.0001
+# threshold_mode: 'rel'
+# cooldown: 0
+# min_lr: 0
+# eps: 1e-08
 
 #contrastive learning
 temperature: 0.5
-contrastive_weight: 1.0
+contrastive_weight: 0.5
 drop_edge_prob: 0.2
 
 #SIR
-key_node: 0.2
+key_node: 0.3
 beta: 0.2
 gamma: 0.1
 num_simulations: 10 

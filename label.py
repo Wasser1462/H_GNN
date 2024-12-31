@@ -4,6 +4,7 @@
 
 import numpy as np
 import random
+import os
 from tqdm import tqdm
 import networkx as nx
 import logging
@@ -112,8 +113,17 @@ def select_key_nodes(G, infection_ability, top_percent):
         index = node_to_index[node]
         binary_matrix[index] = 1
 
-    logging.info(f"Selected top {top_n} ({top_percent*100}%) key nodes out of {len(G.nodes())}.")
+    #logging.info(f"Selected top {top_n} ({top_percent*100}%) key nodes out of {len(G.nodes())}.")
     return binary_matrix
+
+# def save_binary_matrix(binary_matrix, output_dir, steps):
+#     output_file = os.path.join(output_dir, f"binary_matrix_{steps}_steps.txt")
+#     try:
+#         with open(output_file, 'w') as f:
+#             f.write(str(binary_matrix))
+#         logging.info(f"Binary matrix saved to {output_file}")
+#     except Exception as e:
+#         logging.error(f"Error saving binary matrix: {e}")
 
 def plot_infection_counts(infection_ability, steps, output_dir):
     import matplotlib.pyplot as plt
