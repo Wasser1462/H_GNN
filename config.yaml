@@ -22,13 +22,13 @@ input_num: 256
 hidden_dim_0: 1024
 hidden_dim_1: 256
 output_dim: 2
-num_heads: 5
+num_heads: 4
 
 #train config
 use_cache: True
 cache_path: './data/cache'
 batch_size_test: 1
-batch_size: 32
+batch_size: 16
 num_workers: 4
 loss_type: 'cross_entropy'           #choice:'cross_entropy'、'contrastive' or 'both'
 shuffle: True
