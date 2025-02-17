@@ -13,7 +13,7 @@ def print_model_parameters(model_path):
     print("Model Parameters:\n")
     for name, param in model.items():
         print(f"Layer: {name} | Size: {param.size()} | Requires Grad: {param.requires_grad}")
-        print(f"Parameters:\n{param}\n")
+        #print(f"Parameters:\n{param}\n")
     
-model_path = '/data1/zengyongwang/test/H_GNN/result/model.pt'  
+model_path ='/data1/zengyongwang/TeleSpeech-ASR/wenet_representation/exp/d2v2_ark_conformer_cantonese/final.pt'
 print_model_parameters(model_path)

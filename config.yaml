@@ -6,7 +6,7 @@ output_result: 'result'
 
 #device
 use_cpu: False        #choice:True or False
-gpu_ids: [0]          
+gpu_ids: [7]          
 
 #node2vec
 walk_length: 30
@@ -30,7 +30,7 @@ cache_path: './data/cache'
 batch_size_test: 1
 batch_size: 16
 num_workers: 4
-loss_type: 'cross_entropy'           #choice:'cross_entropy'、'contrastive' or 'both'
+loss_type: 'both'           #choice:'cross_entropy'、'contrastive' or 'both'
 shuffle: True
 early_stopping: False
 early_stopping_patience: 30

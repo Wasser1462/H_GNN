@@ -2,6 +2,7 @@
 # Author: zyw
 # Date: 2024-10-23
 # Description: Defines the Hybrid GNN model combining GAT and Transformer layers, integrating CEW values into the attention mechanism.
+
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, TransformerConv, GATConv
